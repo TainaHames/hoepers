@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus — Hoepers Admin</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  :root {
+    --navy:#0d1b2e;--navy-card:#112240;--navy-border:#1e3a5f;--navy-hover:#1a2f4a;
+    --teal:#00c896;--teal-dim:#00c89618;--amber:#f5a623;--red:#e84855;--blue-soft:#4a9eff;
+    --text-primary:#e8f0fe;--text-secondary:#7a9cc4;--text-muted:#4a6a8a;
+    --gold:#c8a84b;--silver:#8a9bb0;--bronze:#a0674a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--navy);font-family:'Inter',sans-serif;color:var(--text-primary);min-height:100vh}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;border-bottom:1px solid var(--navy-border)}
+  .topbar-brand{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text-secondary);letter-spacing:.08em}
+  .topbar-brand span{color:var(--teal);font-weight:700}
+  .topbar-brand .sep{color:var(--navy-border);margin:0 4px}
+  .topbar-right{display:flex;align-items:center;gap:12px}
+  .topbar-date{font-size:12px;color:var(--text-muted)}
+  .topbar-badge{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--amber)}
+  .main{max-width:1200px;margin:0 auto;padding:28px 24px}
+  .header-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:14px;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .header-left{display:flex;align-items:center;gap:16px}
+  .header-icon{width:46px;height:46px;background:var(--teal-dim);border:1px solid #00c89644;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+  .header-title{font-size:18px;font-weight:600}
+  .header-sub{font-size:12px;color:var(--text-secondary);margin-top:3px}
+  .section-label{font-size:10px;font-weight:600;letter-spacing:.12em;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px}
+
+  /* Ciclo card */
+  .ciclo-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .ciclo-info{display:flex;align-items:center;gap:12px}
+  .ciclo-dot{width:10px;height:10px;border-radius:50%;background:var(--teal);flex-shrink:0}
+  .ciclo-dot.vazio{background:var(--text-muted)}
+  .ciclo-label{font-size:13px;font-weight:500}
+  .ciclo-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+  .ciclo-acoes{display:flex;gap:8px;align-items:center}
+  .btn-reset{background:transparent;border:1px solid #e8485544;color:var(--red);font-size:12px;font-family:'Inter',sans-serif;padding:7px 16px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s}
+  .btn-reset:hover{background:#e8485511;border-color:var(--red)}
+  .historico-badge{background:#0a1628;border:1px solid var(--navy-border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--text-muted)}
+
+  .upload-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+  .upload-box{background:#0a1628;border:1px solid var(--navy-border);border-radius:10px;padding:16px 18px}
+  .upload-box-title{font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px}
+  .upload-box-desc{font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.5}
+  .file-status{font-size:12px;color:var(--teal);margin-bottom:10px;min-height:18px}
+  .file-status.empty{color:var(--text-muted)}
+  .file-input{display:none}
+  .btn-upload{width:100%;background:var(--navy-card);border:1px solid var(--navy-border);color:var(--text-secondary);font-size:13px;font-family:'Inter',sans-serif;padding:9px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s}
+  .btn-upload:hover{background:var(--navy-hover);color:var(--text-primary);border-color:var(--teal)}
+  .status-bar{background:#0a1628;border:1px solid var(--navy-border);border-radius:10px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .status-msg{font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:8px}
+  .btn-publish{background:var(--amber);color:#1a1000;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s}
+  .btn-publish:hover{background:#f7b83a}
+  .btn-publish:disabled{opacity:.4;cursor:not-allowed}
+  .metrics-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--navy-border);border:1px solid var(--navy-border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+  .metric-cell{background:var(--navy-card);padding:18px 20px}
+  .metric-label{font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px}
+  .metric-value{font-size:22px;font-weight:700;color:var(--text-primary);line-height:1;margin-bottom:4px}
+  .metric-sub{font-size:11px;color:var(--text-muted)}
+  .warn-box{background:#1a1000;border:1px solid #f5a62344;border-radius:10px;padding:12px 18px;margin-bottom:20px;display:none}
+  .warn-box.show{display:block}
+  .warn-title{font-size:11px;font-weight:600;color:var(--amber);margin-bottom:6px}
+  .warn-list{font-size:12px;color:#c0882a;line-height:1.8}
+  .sort-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px}
+  .sort-btns{display:flex;gap:6px;flex-wrap:wrap}
+  .btn-sort{background:transparent;border:1px solid var(--navy-border);color:var(--text-secondary);font-size:12px;font-family:'Inter',sans-serif;padding:6px 14px;border-radius:20px;cursor:pointer;transition:all .2s}
+  .btn-sort:hover{border-color:var(--teal);color:var(--text-primary)}
+  .btn-sort.active{background:var(--teal);border-color:var(--teal);color:#001a10;font-weight:600}
+  .btn-export{background:transparent;border:1px solid var(--navy-border);color:var(--text-secondary);font-size:12px;font-family:'Inter',sans-serif;padding:6px 14px;border-radius:20px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s}
+  .btn-export:hover{border-color:var(--blue-soft);color:var(--blue-soft)}
+  .table-wrap{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:12px;overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  thead th{padding:12px 16px;font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase;text-align:left;border-bottom:1px solid var(--navy-border);background:#0a1628}
+  thead th.right{text-align:right}
+  tbody tr{border-bottom:1px solid #0d1f35;transition:background .15s}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:var(--navy-hover)}
+  td{padding:13px 16px;font-size:13px;color:var(--text-primary);vertical-align:middle}
+  td.right{text-align:right}
+  td.muted{color:var(--text-secondary);font-size:12px}
+  .rank-badge{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+  .rank-1{background:#2a2000;color:var(--gold);border:1px solid var(--gold)}
+  .rank-2{background:#1a1f28;color:var(--silver);border:1px solid var(--silver)}
+  .rank-3{background:#1f1208;color:var(--bronze);border:1px solid var(--bronze)}
+  .rank-n{background:#0d1b2e;color:var(--text-muted);border:1px solid var(--navy-border)}
+  .bar-cell{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+  .bar-track{width:80px;height:5px;background:#0a1628;border-radius:3px;overflow:hidden;flex-shrink:0}
+  .bar-fill{height:100%;border-radius:3px;transition:width .4s}
+  .bar-green{background:var(--teal)}.bar-amber{background:var(--amber)}.bar-red{background:var(--red)}
+  .pct-green{color:var(--teal);font-weight:600}.pct-amber{color:var(--amber);font-weight:600}.pct-red{color:var(--red);font-weight:600}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+  .dot-green{background:var(--teal)}.dot-amber{background:var(--amber)}.dot-red{background:var(--red)}
+  .meta-cell{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+  .meta-sub{font-size:10px;color:var(--text-muted)}
+  .empty-state{text-align:center;padding:60px 20px;color:var(--text-muted);font-size:14px}
+  .modal-overlay{position:fixed;inset:0;background:#00000088;display:flex;align-items:center;justify-content:center;z-index:100;display:none}
+  .modal-overlay.show{display:flex}
+  .modal{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:14px;padding:28px 32px;max-width:400px;width:100%;text-align:center}
+  .modal-icon{font-size:36px;margin-bottom:12px}
+  .modal-title{font-size:16px;font-weight:600;margin-bottom:8px}
+  .modal-sub{font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:24px}
+  .modal-btns{display:flex;gap:10px;justify-content:center}
+  .btn-confirm-reset{background:var(--red);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:10px 22px;border-radius:8px;cursor:pointer}
+  .btn-cancel{background:transparent;border:1px solid var(--navy-border);color:var(--text-secondary);font-family:'Inter',sans-serif;font-size:13px;padding:10px 22px;border-radius:8px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand"><span>NEXUS</span><span class="sep">/</span>ASSESSORIA DE COBRANÇA</div>
+  <div class="topbar-right">
+    <div class="topbar-badge">⚙ ADMINISTRADOR</div>
+    <div class="topbar-date" id="topbar-date"></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="header-card">
+    <div class="header-left">
+      <div class="header-icon">📊</div>
+      <div>
+        <div class="header-title">Ranking de operadores — HOEPERS</div>
+        <div class="header-sub" id="header-sub">Conectando ao histórico...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ciclo ativo -->
+  <div class="section-label">Ciclo atual</div>
+  <div class="ciclo-card">
+    <div class="ciclo-info">
+      <div class="ciclo-dot" id="ciclo-dot"></div>
+      <div>
+        <div class="ciclo-label" id="ciclo-label">Carregando...</div>
+        <div class="ciclo-sub" id="ciclo-sub"></div>
+      </div>
+    </div>
+    <div class="ciclo-acoes">
+      <div class="historico-badge" id="historico-badge">0 pagamentos acumulados</div>
+      <button class="btn-reset" onclick="confirmarReset()">🗑 Resetar ciclo</button>
+    </div>
+  </div>
+
+  <!-- Upload -->
+  <div class="section-label">Adicionar pagamentos do dia</div>
+  <div class="upload-grid">
+    <div class="upload-box">
+      <div class="upload-box-title">Pagamentos Hoepers</div>
+      <div class="upload-box-desc">Arquivo .xlsx do dia enviado pela Hoepers. Será acumulado ao histórico do ciclo.</div>
+      <div class="file-status empty" id="status-hoepers">Nenhum arquivo selecionado</div>
+      <label class="btn-upload" for="file-hoepers">⬆ Selecionar arquivo</label>
+      <input class="file-input" type="file" id="file-hoepers" accept=".xls,.xlsx">
+    </div>
+    <div class="upload-box">
+      <div class="upload-box-title">Analítico CRM Nexus</div>
+      <div class="upload-box-desc">Relatório do CRM com operador por CPF. Pode ser o mesmo arquivo de sempre.</div>
+      <div class="file-status empty" id="status-crm">Nenhum arquivo selecionado</div>
+      <label class="btn-upload" for="file-crm">⬆ Selecionar arquivo</label>
+      <input class="file-input" type="file" id="file-crm" accept=".xls,.xlsx">
+    </div>
+    <div class="upload-box">
+      <div class="upload-box-title">Metas dos operadores</div>
+      <div class="upload-box-desc">Nome na col. A e meta em R$ na col. B. Pode ser o mesmo arquivo de sempre.</div>
+      <div class="file-status empty" id="status-metas">Nenhum arquivo selecionado</div>
+      <label class="btn-upload" for="file-metas">⬆ Selecionar arquivo</label>
+      <input class="file-input" type="file" id="file-metas" accept=".xls,.xlsx">
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-msg" id="status-msg"><span style="color:var(--text-muted)">○</span> Aguardando arquivos para processar.</div>
+    <button class="btn-publish" id="btn-publish" disabled onclick="publicarDados()">⬆ Processar e publicar</button>
+  </div>
+
+  <div class="warn-box" id="warn-box">
+    <div class="warn-title">⚠ Pagamentos sem operador identificado</div>
+    <div class="warn-list" id="warn-list"></div>
+  </div>
+
+  <div id="metrics-section" style="display:none">
+    <div class="metrics-grid">
+      <div class="metric-cell"><div class="metric-label">Total comissão</div><div class="metric-value" id="m-comissao">—</div><div class="metric-sub">acumulado no ciclo</div></div>
+      <div class="metric-cell"><div class="metric-label">Total recebido</div><div class="metric-value" id="m-recebido">—</div><div class="metric-sub">acumulado no ciclo</div></div>
+      <div class="metric-cell"><div class="metric-label">Operadores</div><div class="metric-value" id="m-ops">—</div><div class="metric-sub">com meta definida</div></div>
+      <div class="metric-cell"><div class="metric-label">Sem operador</div><div class="metric-value" id="m-sem-op" style="color:var(--amber)">—</div><div class="metric-sub">não atribuídos</div></div>
+      <div class="metric-cell"><div class="metric-label">Dias úteis restantes</div><div class="metric-value" id="m-du-rest">—</div><div class="metric-sub" id="m-du-sub">no ciclo</div></div>
+    </div>
+
+    <div class="sort-bar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:12px;color:var(--text-muted)">Ordenar:</span>
+        <div class="sort-btns">
+          <button class="btn-sort active" onclick="sortBy('proj',event)">% Projeção</button>
+          <button class="btn-sort" onclick="sortBy('real',event)">% Realizado</button>
+          <button class="btn-sort" onclick="sortBy('comissao',event)">Comissão</button>
+          <button class="btn-sort" onclick="sortBy('pago',event)">Valor Pago</button>
+          <button class="btn-sort" onclick="sortBy('nome',event)">Nome</button>
+        </div>
+      </div>
+      <button class="btn-export" onclick="exportCSV()">⬇ Exportar CSV</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:48px">#</th>
+            <th>Operador</th>
+            <th class="right">Comissão</th>
+            <th class="right">Valor Pago</th>
+            <th class="right">Meta</th>
+            <th class="right">% Realizado</th>
+            <th class="right">% Projeção</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="empty-state" class="empty-state">
+    <div style="font-size:40px;margin-bottom:12px;opacity:.4">📋</div>
+    Carregue os três arquivos para gerar o ranking
+  </div>
+</div>
+
+<!-- Modal de reset -->
+<div class="modal-overlay" id="modal-reset">
+  <div class="modal">
+    <div class="modal-icon">⚠️</div>
+    <div class="modal-title">Resetar ciclo?</div>
+    <div class="modal-sub">Isso vai apagar <strong>todos os pagamentos acumulados</strong> no Firebase e zerar o ranking. Use apenas ao virar o mês.</div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-confirm-reset" onclick="executarReset()">Sim, resetar ciclo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCGvW6rQVgvWneq-x6OCwOGhCnO2xoy0S0",
+    authDomain: "ranking-hoepers.firebaseapp.com",
+    databaseURL: "https://ranking-hoepers-default-rtdb.firebaseio.com",
+    projectId: "ranking-hoepers",
+    storageBucket: "ranking-hoepers.firebasestorage.app",
+    messagingSenderId: "1065309462071",
+    appId: "1:1065309462071:web:4dfbcd7260ad572b7329b2",
+    measurementId: "G-CGJ3WB506B"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const TABELA_COM = [
+    [0,180,0.15,0.045,0.075],[181,360,0.20,0.060,0.100],
+    [361,720,0.25,0.075,0.125],[721,1080,0.30,0.090,0.150],
+    [1081,1440,0.35,0.105,0.175],[1441,9999,0.40,0.120,0.200],
+  ];
+
+  function pctComissao(cedente, dias) {
+    const c = String(cedente).trim().toUpperCase();
+    for (const [mn,mx,dir,i30,i50] of TABELA_COM) {
+      if (dias >= mn && dias <= mx) {
+        if (c === 'NEX') return dir;
+        if (c === 'HPD') return i50;
+        return i30;
+      }
+    }
+    return 0;
+  }
+
+  const hoje = new Date();
+  document.getElementById('topbar-date').textContent =
+    hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+
+  function fmt(v){return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+  function diasUteisNoMes(y,m){const d=new Date(y,m,0).getDate();let w=0;for(let i=1;i<=d;i++){const dow=new Date(y,m-1,i).getDay();if(dow!==0&&dow!==6)w++;}return w;}
+  function diasUteisAte(y,m,ate){let w=0;for(let i=1;i<=ate;i++){const dow=new Date(y,m-1,i).getDay();if(dow!==0&&dow!==6)w++;}return w;}
+
+  let dadosRanking=[], sortAtual='proj', metaMap={}, cpfOpMap={};
+  let historicoFirebase = {}; // pagamentos já salvos no Firebase
+
+  // ── Carregar histórico do Firebase ao iniciar ─────────────────────────────
+  db.ref('hoepers/pagamentos').on('value', snap => {
+    historicoFirebase = snap.val() || {};
+    const total = Object.keys(historicoFirebase).length;
+    document.getElementById('historico-badge').textContent = total + ' pagamentos acumulados';
+
+    if (total > 0) {
+      document.getElementById('ciclo-dot').classList.remove('vazio');
+      document.getElementById('ciclo-label').textContent = 'Ciclo ativo';
+      document.getElementById('ciclo-sub').textContent =
+        'Iniciado com ' + total + ' pagamentos acumulados no Firebase';
+    } else {
+      document.getElementById('ciclo-dot').classList.add('vazio');
+      document.getElementById('ciclo-label').textContent = 'Ciclo vazio';
+      document.getElementById('ciclo-sub').textContent = 'Nenhum pagamento acumulado ainda';
+    }
+    document.getElementById('header-sub').textContent =
+      'Histórico: ' + total + ' pagamentos · sobe o arquivo do dia para acumular';
+
+    // Se já tem CRM e metas carregados, recalcular ranking
+    if (Object.keys(cpfOpMap).length > 0 && Object.keys(metaMap).length > 0) {
+      calcularERenderizar();
+    }
+  });
+
+  // ── Leitura de arquivos ───────────────────────────────────────────────────
+  function readRaw(file){
+    return new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];res(XLSX.utils.sheet_to_json(ws,{defval:'',header:1}));}catch(err){rej(err);}};
+      r.onerror=rej;r.readAsArrayBuffer(file);
+    });
+  }
+  function readWithHeader(file){
+    return new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];res(XLSX.utils.sheet_to_json(ws,{defval:''}));}catch(err){rej(err);}};
+      r.onerror=rej;r.readAsArrayBuffer(file);
+    });
+  }
+
+  const arquivos={hoepers:null,crm:null,metas:null};
+
+  ['hoepers','crm','metas'].forEach(key=>{
+    document.getElementById('file-'+key).addEventListener('change',function(){
+      if(!this.files[0])return;
+      arquivos[key]=this.files[0];
+      const el=document.getElementById('status-'+key);
+      el.textContent='✓ '+this.files[0].name;
+      el.classList.remove('empty');
+      tentarProcessar();
+    });
+  });
+
+  async function tentarProcessar(){
+    if(!arquivos.hoepers||!arquivos.crm||!arquivos.metas)return;
+    document.getElementById('status-msg').innerHTML='<span style="color:var(--amber)">◐</span> Processando arquivos...';
+    try{await processarArquivos();}
+    catch(err){
+      document.getElementById('status-msg').innerHTML='<span style="color:var(--red)">✗</span> Erro: '+err.message;
+      console.error(err);
+    }
+  }
+
+  async function processarArquivos(){
+    const [hoepersRows, crmRaw, metasRaw] = await Promise.all([
+      readWithHeader(arquivos.hoepers),
+      readRaw(arquivos.crm),
+      readRaw(arquivos.metas),
+    ]);
+
+    // Montar mapa CPF → Operador
+    const crmHeaderIdx = crmRaw.findIndex(row => row.some(c=>String(c).trim()==='CPF/CNPJ'));
+    if(crmHeaderIdx===-1) throw new Error('Coluna CPF/CNPJ não encontrada no CRM.');
+    const crmHeaders = crmRaw[crmHeaderIdx].map(h=>String(h).trim());
+    const iCpf=crmHeaders.indexOf('CPF/CNPJ'), iOp=crmHeaders.indexOf('Operador');
+    if(iCpf===-1||iOp===-1) throw new Error('Colunas CPF/CNPJ ou Operador não encontradas.');
+
+    cpfOpMap={};
+    for(let i=crmHeaderIdx+1;i<crmRaw.length;i++){
+      const row=crmRaw[i];
+      const cpfNum=parseInt(String(row[iCpf]).replace(/\D/g,''),10);
+      const op=String(row[iOp]||'').trim();
+      if(!isNaN(cpfNum)&&cpfNum>0&&op&&!cpfOpMap[cpfNum]) cpfOpMap[cpfNum]=op;
+    }
+
+    // Montar mapa metas
+    metaMap={};
+    metasRaw.forEach(row=>{
+      if(!row||row.length<2)return;
+      const nome=String(row[0]).trim();
+      const meta=parseFloat(row[1])||0;
+      if(nome&&meta>0) metaMap[nome.toUpperCase()]={original:nome,meta};
+    });
+
+    // Montar novos pagamentos do arquivo Hoepers de hoje
+    // Chave de deduplicação: CPF + DataPagamento (sobrescreve se vier igual)
+    const novosPagamentos={};
+    const semOperador=[];
+
+    hoepersRows.forEach(row=>{
+      const cpfRaw = row['CPF'];
+      const valorPago = parseFloat(row['Valor Pago'])||0;
+      const cedente = String(row['Cedente']||'').trim();
+      const atrasoStr = String(row['Atraso Parcela Mais Antiga']||'').trim();
+      const dataPag = String(row['Data Pagamento']||'').trim();
+      const contrato = String(row['Contrato']||'').trim();
+
+      const cpfNum = parseInt(String(cpfRaw).replace(/\D/g,''),10);
+      // Chave única: CPF + data pagamento + contrato (para mesmo CPF com múltiplos pagamentos no mesmo dia)
+      const chave = cpfNum + '_' + dataPag.replace(/\//g,'-') + '_' + contrato.replace(/[^a-zA-Z0-9]/g,'');
+
+      let dias=0;
+      if(atrasoStr){
+        const p=atrasoStr.split('/');
+        if(p.length===3){
+          const dt=new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));
+          dias=Math.floor((hoje-dt)/86400000);
+        }
+      }
+
+      const operador=cpfOpMap[cpfNum]||null;
+      if(!operador){
+        semOperador.push({cpf:cpfRaw,contrato,cedente,valor:valorPago});
+      }
+
+      novosPagamentos[chave]={
+        cpf:cpfNum, valorPago, cedente, dias, contrato, dataPag, operador
+      };
+    });
+
+    // Exibir aviso sem operador
+    const warnBox=document.getElementById('warn-box');
+    if(semOperador.length>0){
+      warnBox.classList.add('show');
+      document.getElementById('warn-list').innerHTML=semOperador.map(s=>
+        `CPF ${s.cpf} · Contrato ${s.contrato} · Cedente ${s.cedente} · ${fmt(s.valor)}`
+      ).join('<br>');
+    } else {
+      warnBox.classList.remove('show');
+    }
+
+    // Combinar histórico Firebase + novos (novos sobrescrevem se mesma chave)
+    const pagamentosCompletos = {...historicoFirebase, ...novosPagamentos};
+
+    // Calcular ranking com todos os pagamentos
+    calcularRanking(pagamentosCompletos);
+
+    // Guardar novos pagamentos para publicação
+    window._payloadPagamentos = pagamentosCompletos;
+    window._semOperador = semOperador.length;
+
+    document.getElementById('btn-publish').disabled=false;
+    document.getElementById('status-msg').innerHTML=
+      '<span style="color:var(--teal)">●</span> Processado: '+
+      Object.keys(novosPagamentos).length+' novos + '+
+      Object.keys(historicoFirebase).length+' histórico = '+
+      Object.keys(pagamentosCompletos).length+' total. '+
+      (semOperador.length>0?semOperador.length+' sem operador. ':'')+
+      'Pronto para publicar.';
+  }
+
+  function calcularERenderizar(){
+    calcularRanking({...historicoFirebase});
+  }
+
+  function calcularRanking(pagamentos){
+    const curMonth=hoje.getMonth()+1, curYear=hoje.getFullYear(), curDay=hoje.getDate();
+    const totalWD=diasUteisNoMes(curYear,curMonth);
+    const workedWD=diasUteisAte(curYear,curMonth,curDay);
+    const restWD=totalWD-workedWD;
+
+    const opAgg={};
+    let totalRecebido=0, totalComissao=0;
+
+    Object.values(pagamentos).forEach(p=>{
+      if(!p.operador) return;
+      const pct=pctComissao(p.cedente,p.dias);
+      const comissao=p.valorPago*pct;
+      totalRecebido+=p.valorPago;
+      totalComissao+=comissao;
+      const key=p.operador.toUpperCase();
+      if(!opAgg[key]) opAgg[key]={original:p.operador,pago:0,comissao:0};
+      opAgg[key].pago+=p.valorPago;
+      opAgg[key].comissao+=comissao;
+    });
+
+    dadosRanking=Object.keys(metaMap).map(opKey=>{
+      const meta=metaMap[opKey].meta;
+      const nome=metaMap[opKey].original;
+      const agg=opAgg[opKey]||{pago:0,comissao:0};
+      const realPct=meta>0?(agg.pago/meta)*100:0;
+      const projVal=workedWD>0?(agg.pago/workedWD)*totalWD:0;
+      const projPct=meta>0?(projVal/meta)*100:0;
+      return{op:nome,pago:agg.pago,comissao:agg.comissao,meta,realPct,projVal,projPct,totalWD,workedWD,restWD};
+    });
+
+    document.getElementById('m-comissao').textContent=fmt(totalComissao);
+    document.getElementById('m-recebido').textContent=fmt(totalRecebido);
+    document.getElementById('m-ops').textContent=dadosRanking.length;
+    document.getElementById('m-sem-op').textContent=window._semOperador||0;
+    document.getElementById('m-du-rest').textContent=restWD;
+    document.getElementById('m-du-sub').textContent='de '+totalWD+' úteis no ciclo';
+
+    document.getElementById('metrics-section').style.display='block';
+    document.getElementById('empty-state').style.display='none';
+    renderTabela();
+  }
+
+  function renderTabela(){
+    let sorted=[...dadosRanking];
+    if(sortAtual==='proj') sorted.sort((a,b)=>b.projPct-a.projPct);
+    else if(sortAtual==='real') sorted.sort((a,b)=>b.realPct-a.realPct);
+    else if(sortAtual==='comissao') sorted.sort((a,b)=>b.comissao-a.comissao);
+    else if(sortAtual==='pago') sorted.sort((a,b)=>b.pago-a.pago);
+    else sorted.sort((a,b)=>a.op.localeCompare(b.op));
+
+    const tbody=document.getElementById('table-body');
+    tbody.innerHTML='';
+    sorted.forEach((r,i)=>{
+      const rc=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+      const realC=r.realPct>=100?'pct-green':r.realPct>=80?'pct-amber':'pct-red';
+      const projC=r.projPct>=100?'pct-green':r.projPct>=80?'pct-amber':'pct-red';
+      const barC=r.realPct>=100?'bar-green':r.realPct>=80?'bar-amber':'bar-red';
+      const barPC=r.projPct>=100?'bar-green':r.projPct>=80?'bar-amber':'bar-red';
+      const dotC=r.projPct>=100?'dot-green':r.projPct>=80?'dot-amber':'dot-red';
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td><span class="rank-badge ${rc}">${i+1}</span></td>
+        <td style="font-weight:600">${r.op}</td>
+        <td class="right" style="color:var(--teal);font-weight:600">${fmt(r.comissao)}</td>
+        <td class="right">${fmt(r.pago)}</td>
+        <td class="right"><div class="meta-cell"><span class="muted">${r.meta>0?fmt(r.meta):'—'}</span><span class="meta-sub">meta valor pago</span></div></td>
+        <td class="right"><div class="bar-cell"><div class="bar-track"><div class="bar-fill ${barC}" style="width:${Math.min(100,r.realPct)}%"></div></div><span class="${realC}" style="min-width:46px">${r.realPct.toFixed(1)}%</span></div></td>
+        <td class="right"><div class="bar-cell"><span class="dot ${dotC}"></span><div class="bar-track"><div class="bar-fill ${barPC}" style="width:${Math.min(100,r.projPct)}%"></div></div><span class="${projC}" style="min-width:46px">${r.projPct.toFixed(1)}%</span></div></td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function sortBy(key,e){
+    sortAtual=key;
+    document.querySelectorAll('.btn-sort').forEach(b=>b.classList.remove('active'));
+    e.target.classList.add('active');
+    renderTabela();
+  }
+
+  async function publicarDados(){
+    if(!window._payloadPagamentos) return;
+    const btn=document.getElementById('btn-publish');
+    btn.disabled=true; btn.textContent='Publicando...';
+
+    const curMonth=hoje.getMonth()+1, curYear=hoje.getFullYear(), curDay=hoje.getDate();
+    const totalWD=diasUteisNoMes(curYear,curMonth);
+    const workedWD=diasUteisAte(curYear,curMonth,curDay);
+
+    // Recalcular totais para o payload do ranking
+    const opAgg={};
+    let totalRecebido=0, totalComissao=0;
+    Object.values(window._payloadPagamentos).forEach(p=>{
+      if(!p.operador) return;
+      const pct=pctComissao(p.cedente,p.dias);
+      const comissao=p.valorPago*pct;
+      totalRecebido+=p.valorPago;
+      totalComissao+=comissao;
+      const key=p.operador.toUpperCase();
+      if(!opAgg[key]) opAgg[key]={original:p.operador,pago:0,comissao:0};
+      opAgg[key].pago+=p.valorPago;
+      opAgg[key].comissao+=comissao;
+    });
+
+    const ranking=Object.keys(metaMap).map(opKey=>{
+      const meta=metaMap[opKey].meta;
+      const agg=opAgg[opKey]||{pago:0,comissao:0};
+      const realPct=meta>0?(agg.pago/meta)*100:0;
+      const projVal=workedWD>0?(agg.pago/workedWD)*totalWD:0;
+      const projPct=meta>0?(projVal/meta)*100:0;
+      return{op:metaMap[opKey].original,pago:agg.pago,comissao:agg.comissao,meta,realPct,projVal,projPct};
+    });
+
+    try{
+      await Promise.all([
+        db.ref('hoepers/pagamentos').set(window._payloadPagamentos),
+        db.ref('ranking/atual').set({
+          ranking, totalRecebido, totalComissao, totalWD, workedWD,
+          restWD: totalWD-workedWD,
+          semOperador: window._semOperador||0,
+          atualizadoEm: new Date().toISOString()
+        })
+      ]);
+      document.getElementById('status-msg').innerHTML=
+        '<span style="color:var(--teal)">✓</span> Publicado com sucesso. '+
+        Object.keys(window._payloadPagamentos).length+' pagamentos no histórico.';
+    }catch(err){
+      document.getElementById('status-msg').innerHTML='<span style="color:var(--red)">✗</span> Erro ao publicar: '+err.message;
+    }
+    btn.disabled=false; btn.textContent='⬆ Processar e publicar';
+  }
+
+  function confirmarReset(){document.getElementById('modal-reset').classList.add('show')}
+  function fecharModal(){document.getElementById('modal-reset').classList.remove('show')}
+
+  async function executarReset(){
+    fecharModal();
+    try{
+      await Promise.all([
+        db.ref('hoepers/pagamentos').remove(),
+        db.ref('ranking/atual').remove()
+      ]);
+      dadosRanking=[];
+      window._payloadPagamentos=null;
+      document.getElementById('metrics-section').style.display='none';
+      document.getElementById('empty-state').style.display='block';
+      document.getElementById('btn-publish').disabled=true;
+      document.getElementById('warn-box').classList.remove('show');
+      document.getElementById('status-msg').innerHTML='<span style="color:var(--teal)">✓</span> Ciclo resetado. Histórico apagado.';
+    }catch(err){
+      document.getElementById('status-msg').innerHTML='<span style="color:var(--red)">✗</span> Erro ao resetar: '+err.message;
+    }
+  }
+
+  function exportCSV(){
+    if(!dadosRanking.length) return;
+    let csv='#;Operador;Comissão;Valor Pago;Meta;% Realizado;% Projeção\n';
+    [...dadosRanking].sort((a,b)=>b.projPct-a.projPct).forEach((r,i)=>{
+      csv+=`${i+1};${r.op};${r.comissao.toFixed(2)};${r.pago.toFixed(2)};${r.meta.toFixed(2)};${r.realPct.toFixed(1)}%;${r.projPct.toFixed(1)}%\n`;
+    });
+    const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='ranking_hoepers.csv';a.click();
+    URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>
