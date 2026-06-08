@@ -31,8 +31,6 @@
   .header-title{font-size:18px;font-weight:600}
   .header-sub{font-size:12px;color:var(--text-secondary);margin-top:3px}
   .section-label{font-size:10px;font-weight:600;letter-spacing:.12em;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px}
-
-  /* Ciclo card */
   .ciclo-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
   .ciclo-info{display:flex;align-items:center;gap:12px}
   .ciclo-dot{width:10px;height:10px;border-radius:50%;background:var(--teal);flex-shrink:0}
@@ -43,7 +41,6 @@
   .btn-reset{background:transparent;border:1px solid #e8485544;color:var(--red);font-size:12px;font-family:'Inter',sans-serif;padding:7px 16px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s}
   .btn-reset:hover{background:#e8485511;border-color:var(--red)}
   .historico-badge{background:#0a1628;border:1px solid var(--navy-border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--text-muted)}
-
   .upload-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
   .upload-box{background:#0a1628;border:1px solid var(--navy-border);border-radius:10px;padding:16px 18px}
   .upload-box-title{font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px}
@@ -99,9 +96,9 @@
   .meta-cell{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
   .meta-sub{font-size:10px;color:var(--text-muted)}
   .empty-state{text-align:center;padding:60px 20px;color:var(--text-muted);font-size:14px}
-  .modal-overlay{position:fixed;inset:0;background:#00000088;display:flex;align-items:center;justify-content:center;z-index:100;display:none}
+  .modal-overlay{position:fixed;inset:0;background:#00000088;display:none;align-items:center;justify-content:center;z-index:100}
   .modal-overlay.show{display:flex}
-  .modal{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:14px;padding:28px 32px;max-width:400px;width:100%;text-align:center}
+  .modal{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:14px;padding:28px 32px;max-width:420px;width:100%;text-align:center}
   .modal-icon{font-size:36px;margin-bottom:12px}
   .modal-title{font-size:16px;font-weight:600;margin-bottom:8px}
   .modal-sub{font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:24px}
@@ -111,7 +108,6 @@
 </style>
 </head>
 <body>
-
 <div class="topbar">
   <div class="topbar-brand"><span>NEXUS</span><span class="sep">/</span>ASSESSORIA DE COBRANÇA</div>
   <div class="topbar-right">
@@ -119,7 +115,6 @@
     <div class="topbar-date" id="topbar-date"></div>
   </div>
 </div>
-
 <div class="main">
   <div class="header-card">
     <div class="header-left">
@@ -131,7 +126,6 @@
     </div>
   </div>
 
-  <!-- Ciclo ativo -->
   <div class="section-label">Ciclo atual</div>
   <div class="ciclo-card">
     <div class="ciclo-info">
@@ -143,11 +137,10 @@
     </div>
     <div class="ciclo-acoes">
       <div class="historico-badge" id="historico-badge">0 pagamentos acumulados</div>
-      <button class="btn-reset" onclick="confirmarReset()">🗑 Resetar ciclo</button>
+      <button class="btn-reset" onclick="confirmarReset()">🗑 Encerrar ciclo e iniciar novo</button>
     </div>
   </div>
 
-  <!-- Upload -->
   <div class="section-label">Adicionar pagamentos do dia</div>
   <div class="upload-grid">
     <div class="upload-box">
@@ -166,7 +159,7 @@
     </div>
     <div class="upload-box">
       <div class="upload-box-title">Metas dos operadores</div>
-      <div class="upload-box-desc">Nome na col. A e meta em R$ na col. B. Pode ser o mesmo arquivo de sempre.</div>
+      <div class="upload-box-desc">Nome na col. A e meta em R$ na col. B.</div>
       <div class="file-status empty" id="status-metas">Nenhum arquivo selecionado</div>
       <label class="btn-upload" for="file-metas">⬆ Selecionar arquivo</label>
       <input class="file-input" type="file" id="file-metas" accept=".xls,.xlsx">
@@ -191,7 +184,6 @@
       <div class="metric-cell"><div class="metric-label">Sem operador</div><div class="metric-value" id="m-sem-op" style="color:var(--amber)">—</div><div class="metric-sub">não atribuídos</div></div>
       <div class="metric-cell"><div class="metric-label">Dias úteis restantes</div><div class="metric-value" id="m-du-rest">—</div><div class="metric-sub" id="m-du-sub">no ciclo</div></div>
     </div>
-
     <div class="sort-bar">
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:12px;color:var(--text-muted)">Ordenar:</span>
@@ -205,7 +197,6 @@
       </div>
       <button class="btn-export" onclick="exportCSV()">⬇ Exportar CSV</button>
     </div>
-
     <div class="table-wrap">
       <table>
         <thead>
@@ -223,22 +214,21 @@
       </table>
     </div>
   </div>
-
   <div id="empty-state" class="empty-state">
     <div style="font-size:40px;margin-bottom:12px;opacity:.4">📋</div>
     Carregue os três arquivos para gerar o ranking
   </div>
 </div>
 
-<!-- Modal de reset -->
+<!-- Modal reset -->
 <div class="modal-overlay" id="modal-reset">
   <div class="modal">
     <div class="modal-icon">⚠️</div>
-    <div class="modal-title">Resetar ciclo?</div>
-    <div class="modal-sub">Isso vai apagar <strong>todos os pagamentos acumulados</strong> no Firebase e zerar o ranking. Use apenas ao virar o mês.</div>
+    <div class="modal-title">Encerrar ciclo e iniciar novo?</div>
+    <div class="modal-sub">O ranking atual será <strong>salvo como histórico</strong> com o nome do mês e um novo ciclo em branco será iniciado. Os pagamentos acumulados continuam no Firebase.</div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
-      <button class="btn-confirm-reset" onclick="executarReset()">Sim, resetar ciclo</button>
+      <button class="btn-confirm-reset" onclick="executarReset()">Sim, encerrar ciclo</button>
     </div>
   </div>
 </div>
@@ -262,7 +252,6 @@
     [361,720,0.25,0.075,0.125],[721,1080,0.30,0.090,0.150],
     [1081,1440,0.35,0.105,0.175],[1441,9999,0.40,0.120,0.200],
   ];
-
   function pctReceita(cedente, dias) {
     const c = String(cedente).trim().toUpperCase();
     for (const [mn,mx,dir,i30,i50] of TABELA_COM) {
@@ -282,36 +271,28 @@
   function fmt(v){return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
   function diasUteisNoMes(y,m){const d=new Date(y,m,0).getDate();let w=0;for(let i=1;i<=d;i++){const dow=new Date(y,m-1,i).getDay();if(dow!==0&&dow!==6)w++;}return w;}
   function diasUteisAte(y,m,ate){let w=0;for(let i=1;i<=ate;i++){const dow=new Date(y,m-1,i).getDay();if(dow!==0&&dow!==6)w++;}return w;}
+  function nomeMes(y,m){return new Date(y,m-1,1).toLocaleString('pt-BR',{month:'long',year:'numeric'})}
 
   let dadosRanking=[], sortAtual='proj', metaMap={}, cpfOpMap={};
-  let historicoFirebase = {}; // pagamentos já salvos no Firebase
+  let historicoFirebase={};
 
-  // ── Carregar histórico do Firebase ao iniciar ─────────────────────────────
   db.ref('hoepers/pagamentos').on('value', snap => {
     historicoFirebase = snap.val() || {};
     const total = Object.keys(historicoFirebase).length;
     document.getElementById('historico-badge').textContent = total + ' pagamentos acumulados';
-
     if (total > 0) {
       document.getElementById('ciclo-dot').classList.remove('vazio');
-      document.getElementById('ciclo-label').textContent = 'Ciclo ativo';
-      document.getElementById('ciclo-sub').textContent =
-        'Iniciado com ' + total + ' pagamentos acumulados no Firebase';
+      document.getElementById('ciclo-label').textContent = 'Ciclo ativo — ' + nomeMes(hoje.getFullYear(), hoje.getMonth()+1);
+      document.getElementById('ciclo-sub').textContent = total + ' pagamentos acumulados no Firebase';
     } else {
       document.getElementById('ciclo-dot').classList.add('vazio');
       document.getElementById('ciclo-label').textContent = 'Ciclo vazio';
       document.getElementById('ciclo-sub').textContent = 'Nenhum pagamento acumulado ainda';
     }
-    document.getElementById('header-sub').textContent =
-      'Histórico: ' + total + ' pagamentos · sobe o arquivo do dia para acumular';
-
-    // Se já tem CRM e metas carregados, recalcular ranking
-    if (Object.keys(cpfOpMap).length > 0 && Object.keys(metaMap).length > 0) {
-      calcularERenderizar();
-    }
+    document.getElementById('header-sub').textContent = 'Histórico: ' + total + ' pagamentos · sobe o arquivo do dia para acumular';
+    if (Object.keys(cpfOpMap).length > 0 && Object.keys(metaMap).length > 0) calcularERenderizar();
   });
 
-  // ── Leitura de arquivos ───────────────────────────────────────────────────
   function readRaw(file){
     return new Promise((res,rej)=>{
       const r=new FileReader();
@@ -328,7 +309,6 @@
   }
 
   const arquivos={hoepers:null,crm:null,metas:null};
-
   ['hoepers','crm','metas'].forEach(key=>{
     document.getElementById('file-'+key).addEventListener('change',function(){
       if(!this.files[0])return;
@@ -357,7 +337,6 @@
       readRaw(arquivos.metas),
     ]);
 
-    // Montar mapa CPF → Operador
     const crmHeaderIdx = crmRaw.findIndex(row => row.some(c=>String(c).trim()==='CPF/CNPJ'));
     if(crmHeaderIdx===-1) throw new Error('Coluna CPF/CNPJ não encontrada no CRM.');
     const crmHeaders = crmRaw[crmHeaderIdx].map(h=>String(h).trim());
@@ -372,7 +351,6 @@
       if(!isNaN(cpfNum)&&cpfNum>0&&op&&!cpfOpMap[cpfNum]) cpfOpMap[cpfNum]=op;
     }
 
-    // Montar mapa metas
     metaMap={};
     metasRaw.forEach(row=>{
       if(!row||row.length<2)return;
@@ -381,22 +359,18 @@
       if(nome&&meta>0) metaMap[nome.toUpperCase()]={original:nome,meta};
     });
 
-    // Montar novos pagamentos do arquivo Hoepers de hoje
-    // Chave de deduplicação: CPF + DataPagamento (sobrescreve se vier igual)
     const novosPagamentos={};
     const semOperador=[];
 
     hoepersRows.forEach(row=>{
-      const cpfRaw = row['CPF'];
-      const valorPago = parseFloat(row['Valor Pago'])||0;
-      const cedente = String(row['Cedente']||'').trim();
-      const atrasoStr = String(row['Atraso Parcela Mais Antiga']||'').trim();
-      const dataPag = String(row['Data Pagamento']||'').trim();
-      const contrato = String(row['Contrato']||'').trim();
-
-      const cpfNum = parseInt(String(cpfRaw).replace(/\D/g,''),10);
-      // Chave única: CPF + data pagamento + contrato (para mesmo CPF com múltiplos pagamentos no mesmo dia)
-      const chave = cpfNum + '_' + dataPag.replace(/\//g,'-') + '_' + contrato.replace(/[^a-zA-Z0-9]/g,'');
+      const cpfRaw=row['CPF'];
+      const valorPago=parseFloat(row['Valor Pago'])||0;
+      const cedente=String(row['Cedente']||'').trim();
+      const atrasoStr=String(row['Atraso Parcela Mais Antiga']||'').trim();
+      const dataPag=String(row['Data Pagamento']||'').trim();
+      const contrato=String(row['Contrato']||'').trim();
+      const cpfNum=parseInt(String(cpfRaw).replace(/\D/g,''),10);
+      const chave=cpfNum+'_'+dataPag.replace(/\//g,'-')+'_'+contrato.replace(/[^a-zA-Z0-9]/g,'');
 
       let dias=0;
       if(atrasoStr){
@@ -406,63 +380,38 @@
           dias=Math.floor((hoje-dt)/86400000);
         }
       }
-
       const operador=cpfOpMap[cpfNum]||null;
-      if(!operador){
-        semOperador.push({cpf:cpfRaw,contrato,cedente,valor:valorPago});
-      }
-
-      novosPagamentos[chave]={
-        cpf:cpfNum, valorPago, cedente, dias, contrato, dataPag, operador
-      };
+      if(!operador) semOperador.push({cpf:cpfRaw,contrato,cedente,valor:valorPago});
+      novosPagamentos[chave]={cpf:cpfNum,valorPago,cedente,dias,contrato,dataPag,operador};
     });
 
-    // Exibir aviso sem operador
     const warnBox=document.getElementById('warn-box');
     if(semOperador.length>0){
       warnBox.classList.add('show');
-      document.getElementById('warn-list').innerHTML=semOperador.map(s=>
-        `CPF ${s.cpf} · Contrato ${s.contrato} · Cedente ${s.cedente} · ${fmt(s.valor)}`
-      ).join('<br>');
-    } else {
-      warnBox.classList.remove('show');
-    }
+      document.getElementById('warn-list').innerHTML=semOperador.map(s=>`CPF ${s.cpf} · Contrato ${s.contrato} · Cedente ${s.cedente} · ${fmt(s.valor)}`).join('<br>');
+    } else { warnBox.classList.remove('show'); }
 
-    // Combinar histórico Firebase + novos (novos sobrescrevem se mesma chave)
-    const pagamentosCompletos = {...historicoFirebase, ...novosPagamentos};
+    window._payloadPagamentos={...historicoFirebase,...novosPagamentos};
+    window._semOperador=semOperador.length;
 
-    // Calcular ranking com todos os pagamentos
-    calcularRanking(pagamentosCompletos);
-
-    // Guardar novos pagamentos para publicação
-    window._payloadPagamentos = pagamentosCompletos;
-    window._semOperador = semOperador.length;
-
+    calcularRanking(window._payloadPagamentos);
     document.getElementById('btn-publish').disabled=false;
     document.getElementById('status-msg').innerHTML=
-      '<span style="color:var(--teal)">●</span> Processado: '+
-      Object.keys(novosPagamentos).length+' novos + '+
-      Object.keys(historicoFirebase).length+' histórico = '+
-      Object.keys(pagamentosCompletos).length+' total. '+
-      (semOperador.length>0?semOperador.length+' sem operador. ':'')+
-      'Pronto para publicar.';
+      '<span style="color:var(--teal)">●</span> Processado: '+Object.keys(novosPagamentos).length+' novos + '+Object.keys(historicoFirebase).length+' histórico = '+Object.keys(window._payloadPagamentos).length+' total. Pronto para publicar.';
   }
 
-  function calcularERenderizar(){
-    calcularRanking({...historicoFirebase});
-  }
+  function calcularERenderizar(){ calcularRanking({...historicoFirebase}); }
 
   function calcularRanking(pagamentos){
     const curMonth=hoje.getMonth()+1, curYear=hoje.getFullYear(), curDay=hoje.getDate();
     const totalWD=diasUteisNoMes(curYear,curMonth);
     const workedWD=diasUteisAte(curYear,curMonth,curDay);
     const restWD=totalWD-workedWD;
-
     const opAgg={};
     let totalRecebido=0, totalReceita=0;
 
     Object.values(pagamentos).forEach(p=>{
-      if(!p.operador) return;
+      if(!p.operador)return;
       const pct=pctReceita(p.cedente,p.dias);
       const receita=p.valorPago*pct;
       totalRecebido+=p.valorPago;
@@ -489,7 +438,6 @@
     document.getElementById('m-sem-op').textContent=window._semOperador||0;
     document.getElementById('m-du-rest').textContent=restWD;
     document.getElementById('m-du-sub').textContent='de '+totalWD+' úteis no ciclo';
-
     document.getElementById('metrics-section').style.display='block';
     document.getElementById('empty-state').style.display='none';
     renderTabela();
@@ -502,7 +450,6 @@
     else if(sortAtual==='receita') sorted.sort((a,b)=>b.receita-a.receita);
     else if(sortAtual==='pago') sorted.sort((a,b)=>b.pago-a.pago);
     else sorted.sort((a,b)=>a.op.localeCompare(b.op));
-
     const tbody=document.getElementById('table-body');
     tbody.innerHTML='';
     sorted.forEach((r,i)=>{
@@ -513,14 +460,7 @@
       const barPC=r.projPct>=100?'bar-green':r.projPct>=80?'bar-amber':'bar-red';
       const dotC=r.projPct>=100?'dot-green':r.projPct>=80?'dot-amber':'dot-red';
       const tr=document.createElement('tr');
-      tr.innerHTML=`
-        <td><span class="rank-badge ${rc}">${i+1}</span></td>
-        <td style="font-weight:600">${r.op}</td>
-        <td class="right" style="color:var(--teal);font-weight:600">${fmt(r.receita)}</td>
-        <td class="right">${fmt(r.pago)}</td>
-        <td class="right"><div class="meta-cell"><span class="muted">${r.meta>0?fmt(r.meta):'—'}</span><span class="meta-sub">meta valor pago</span></div></td>
-        <td class="right"><div class="bar-cell"><div class="bar-track"><div class="bar-fill ${barC}" style="width:${Math.min(100,r.realPct)}%"></div></div><span class="${realC}" style="min-width:46px">${r.realPct.toFixed(1)}%</span></div></td>
-        <td class="right"><div class="bar-cell"><span class="dot ${dotC}"></span><div class="bar-track"><div class="bar-fill ${barPC}" style="width:${Math.min(100,r.projPct)}%"></div></div><span class="${projC}" style="min-width:46px">${r.projPct.toFixed(1)}%</span></div></td>`;
+      tr.innerHTML=`<td><span class="rank-badge ${rc}">${i+1}</span></td><td style="font-weight:600">${r.op}</td><td class="right" style="color:var(--teal);font-weight:600">${fmt(r.receita)}</td><td class="right">${fmt(r.pago)}</td><td class="right"><div class="meta-cell"><span class="muted">${r.meta>0?fmt(r.meta):'—'}</span><span class="meta-sub">meta valor pago</span></div></td><td class="right"><div class="bar-cell"><div class="bar-track"><div class="bar-fill ${barC}" style="width:${Math.min(100,r.realPct)}%"></div></div><span class="${realC}" style="min-width:46px">${r.realPct.toFixed(1)}%</span></div></td><td class="right"><div class="bar-cell"><span class="dot ${dotC}"></span><div class="bar-track"><div class="bar-fill ${barPC}" style="width:${Math.min(100,r.projPct)}%"></div></div><span class="${projC}" style="min-width:46px">${r.projPct.toFixed(1)}%</span></div></td>`;
       tbody.appendChild(tr);
     });
   }
@@ -533,29 +473,22 @@
   }
 
   async function publicarDados(){
-    if(!window._payloadPagamentos) return;
+    if(!window._payloadPagamentos)return;
     const btn=document.getElementById('btn-publish');
-    btn.disabled=true; btn.textContent='Publicando...';
-
-    const curMonth=hoje.getMonth()+1, curYear=hoje.getFullYear(), curDay=hoje.getDate();
+    btn.disabled=true;btn.textContent='Publicando...';
+    const curMonth=hoje.getMonth()+1,curYear=hoje.getFullYear(),curDay=hoje.getDate();
     const totalWD=diasUteisNoMes(curYear,curMonth);
     const workedWD=diasUteisAte(curYear,curMonth,curDay);
-
-    // Recalcular totais para o payload do ranking
-    const opAgg={};
-    let totalRecebido=0, totalReceita=0;
+    const opAgg={};let totalRecebido=0,totalReceita=0;
     Object.values(window._payloadPagamentos).forEach(p=>{
-      if(!p.operador) return;
+      if(!p.operador)return;
       const pct=pctReceita(p.cedente,p.dias);
       const receita=p.valorPago*pct;
-      totalRecebido+=p.valorPago;
-      totalReceita+=receita;
+      totalRecebido+=p.valorPago;totalReceita+=receita;
       const key=p.operador.toUpperCase();
       if(!opAgg[key]) opAgg[key]={original:p.operador,pago:0,receita:0};
-      opAgg[key].pago+=p.valorPago;
-      opAgg[key].receita+=receita;
+      opAgg[key].pago+=p.valorPago;opAgg[key].receita+=receita;
     });
-
     const ranking=Object.keys(metaMap).map(opKey=>{
       const meta=metaMap[opKey].meta;
       const agg=opAgg[opKey]||{pago:0,receita:0};
@@ -564,24 +497,16 @@
       const projPct=meta>0?(projVal/meta)*100:0;
       return{op:metaMap[opKey].original,pago:agg.pago,receita:agg.receita,meta,realPct,projVal,projPct};
     });
-
     try{
       await Promise.all([
         db.ref('hoepers/pagamentos').set(window._payloadPagamentos),
-        db.ref('ranking/atual').set({
-          ranking, totalRecebido, totalReceita, totalWD, workedWD,
-          restWD: totalWD-workedWD,
-          semOperador: window._semOperador||0,
-          atualizadoEm: new Date().toISOString()
-        })
+        db.ref('ranking/atual').set({ranking,totalRecebido,totalReceita,totalWD,workedWD,restWD:totalWD-workedWD,semOperador:window._semOperador||0,atualizadoEm:new Date().toISOString()})
       ]);
-      document.getElementById('status-msg').innerHTML=
-        '<span style="color:var(--teal)">✓</span> Publicado com sucesso. '+
-        Object.keys(window._payloadPagamentos).length+' pagamentos no histórico.';
+      document.getElementById('status-msg').innerHTML='<span style="color:var(--teal)">✓</span> Publicado com sucesso. '+Object.keys(window._payloadPagamentos).length+' pagamentos no histórico.';
     }catch(err){
-      document.getElementById('status-msg').innerHTML='<span style="color:var(--red)">✗</span> Erro ao publicar: '+err.message;
+      document.getElementById('status-msg').innerHTML='<span style="color:var(--red)">✗</span> Erro: '+err.message;
     }
-    btn.disabled=false; btn.textContent='⬆ Processar e publicar';
+    btn.disabled=false;btn.textContent='⬆ Processar e publicar';
   }
 
   function confirmarReset(){document.getElementById('modal-reset').classList.add('show')}
@@ -589,25 +514,38 @@
 
   async function executarReset(){
     fecharModal();
+    // Salvar snapshot do ciclo atual como histórico
+    const mesKey = hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0');
+    const mesNome = nomeMes(hoje.getFullYear(), hoje.getMonth()+1);
+
+    // Pegar ranking atual publicado para salvar no histórico
+    const snapAtual = await db.ref('ranking/atual').get();
+    const dadosAtuais = snapAtual.val();
+
     try{
+      if(dadosAtuais){
+        await db.ref('ranking/historico/'+mesKey).set({...dadosAtuais, mesNome});
+      }
+      // Zerar apenas o ranking atual e os pagamentos do ciclo
       await Promise.all([
         db.ref('hoepers/pagamentos').remove(),
-        db.ref('ranking/atual').remove()
+        db.ref('ranking/atual').remove(),
       ]);
       dadosRanking=[];
       window._payloadPagamentos=null;
+      window._semOperador=0;
       document.getElementById('metrics-section').style.display='none';
       document.getElementById('empty-state').style.display='block';
       document.getElementById('btn-publish').disabled=true;
       document.getElementById('warn-box').classList.remove('show');
-      document.getElementById('status-msg').innerHTML='<span style="color:var(--teal)">✓</span> Ciclo resetado. Histórico apagado.';
+      document.getElementById('status-msg').innerHTML='<span style="color:var(--teal)">✓</span> Ciclo de '+mesNome+' encerrado e salvo no histórico. Novo ciclo iniciado.';
     }catch(err){
-      document.getElementById('status-msg').innerHTML='<span style="color:var(--red)">✗</span> Erro ao resetar: '+err.message;
+      document.getElementById('status-msg').innerHTML='<span style="color:var(--red)">✗</span> Erro ao encerrar ciclo: '+err.message;
     }
   }
 
   function exportCSV(){
-    if(!dadosRanking.length) return;
+    if(!dadosRanking.length)return;
     let csv='#;Operador;Receita;Valor Pago;Meta;% Realizado;% Projeção\n';
     [...dadosRanking].sort((a,b)=>b.projPct-a.projPct).forEach((r,i)=>{
       csv+=`${i+1};${r.op};${r.receita.toFixed(2)};${r.pago.toFixed(2)};${r.meta.toFixed(2)};${r.realPct.toFixed(1)}%;${r.projPct.toFixed(1)}%\n`;
