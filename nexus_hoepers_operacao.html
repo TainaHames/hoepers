@@ -98,7 +98,7 @@
 
   <div id="conteudo-principal" style="display:none">
     <div class="metrics-grid">
-      <div class="metric-cell"><div class="metric-label">Total comissão</div><div class="metric-value" id="m-comissao">—</div><div class="metric-sub">no ciclo</div></div>
+      <div class="metric-cell"><div class="metric-label">Total receita</div><div class="metric-value" id="m-receita">—</div><div class="metric-sub">no ciclo</div></div>
       <div class="metric-cell"><div class="metric-label">Total recebido</div><div class="metric-value" id="m-recebido">—</div><div class="metric-sub">no ciclo</div></div>
       <div class="metric-cell"><div class="metric-label">Operadores</div><div class="metric-value" id="m-ops">—</div><div class="metric-sub">com meta definida</div></div>
       <div class="metric-cell"><div class="metric-label">Dias úteis restantes</div><div class="metric-value" id="m-du-rest">—</div><div class="metric-sub" id="m-du-sub">no ciclo</div></div>
@@ -109,7 +109,7 @@
       <div class="sort-btns">
         <button class="btn-sort active" onclick="sortBy('proj',event)">% Projeção</button>
         <button class="btn-sort" onclick="sortBy('real',event)">% Realizado</button>
-        <button class="btn-sort" onclick="sortBy('comissao',event)">Comissão</button>
+        <button class="btn-sort" onclick="sortBy('receita',event)">Receita</button>
         <button class="btn-sort" onclick="sortBy('pago',event)">Valor Pago</button>
         <button class="btn-sort" onclick="sortBy('nome',event)">Nome</button>
       </div>
@@ -121,7 +121,7 @@
           <tr>
             <th style="width:48px">#</th>
             <th>Operador</th>
-            <th class="right">Comissão</th>
+            <th class="right">Receita</th>
             <th class="right">Valor Pago</th>
             <th class="right">Meta</th>
             <th class="right">% Realizado</th>
@@ -174,7 +174,7 @@
     }
 
     dadosRanking = dados.ranking;
-    document.getElementById('m-comissao').textContent = fmt(dados.totalComissao);
+    document.getElementById('m-receita').textContent = fmt(dados.totalReceita);
     document.getElementById('m-recebido').textContent = fmt(dados.totalRecebido);
     document.getElementById('m-ops').textContent = dados.ranking.length;
     document.getElementById('m-du-rest').textContent = dados.restWD;
@@ -196,7 +196,7 @@
     let sorted = [...dadosRanking];
     if (sortAtual === 'proj')      sorted.sort((a,b) => b.projPct - a.projPct);
     else if (sortAtual === 'real')  sorted.sort((a,b) => b.realPct - a.realPct);
-    else if (sortAtual === 'comissao') sorted.sort((a,b) => b.comissao - a.comissao);
+    else if (sortAtual === 'receita') sorted.sort((a,b) => b.receita - a.receita);
     else if (sortAtual === 'pago')  sorted.sort((a,b) => b.pago - a.pago);
     else if (sortAtual === 'nome')  sorted.sort((a,b) => a.op.localeCompare(b.op));
 
@@ -216,7 +216,7 @@
       tr.innerHTML = `
         <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
         <td style="font-weight:600">${r.op}</td>
-        <td class="right" style="color:var(--teal);font-weight:600">${fmt(r.comissao)}</td>
+        <td class="right" style="color:var(--teal);font-weight:600">${fmt(r.receita)}</td>
         <td class="right">${fmt(r.pago)}</td>
         <td class="right">
           <div class="meta-cell">

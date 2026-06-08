@@ -185,7 +185,7 @@
 
   <div id="metrics-section" style="display:none">
     <div class="metrics-grid">
-      <div class="metric-cell"><div class="metric-label">Total comissão</div><div class="metric-value" id="m-comissao">—</div><div class="metric-sub">acumulado no ciclo</div></div>
+      <div class="metric-cell"><div class="metric-label">Total receita</div><div class="metric-value" id="m-receita">—</div><div class="metric-sub">acumulado no ciclo</div></div>
       <div class="metric-cell"><div class="metric-label">Total recebido</div><div class="metric-value" id="m-recebido">—</div><div class="metric-sub">acumulado no ciclo</div></div>
       <div class="metric-cell"><div class="metric-label">Operadores</div><div class="metric-value" id="m-ops">—</div><div class="metric-sub">com meta definida</div></div>
       <div class="metric-cell"><div class="metric-label">Sem operador</div><div class="metric-value" id="m-sem-op" style="color:var(--amber)">—</div><div class="metric-sub">não atribuídos</div></div>
@@ -198,7 +198,7 @@
         <div class="sort-btns">
           <button class="btn-sort active" onclick="sortBy('proj',event)">% Projeção</button>
           <button class="btn-sort" onclick="sortBy('real',event)">% Realizado</button>
-          <button class="btn-sort" onclick="sortBy('comissao',event)">Comissão</button>
+          <button class="btn-sort" onclick="sortBy('receita',event)">Receita</button>
           <button class="btn-sort" onclick="sortBy('pago',event)">Valor Pago</button>
           <button class="btn-sort" onclick="sortBy('nome',event)">Nome</button>
         </div>
@@ -212,7 +212,7 @@
           <tr>
             <th style="width:48px">#</th>
             <th>Operador</th>
-            <th class="right">Comissão</th>
+            <th class="right">Receita</th>
             <th class="right">Valor Pago</th>
             <th class="right">Meta</th>
             <th class="right">% Realizado</th>
@@ -263,7 +263,7 @@
     [1081,1440,0.35,0.105,0.175],[1441,9999,0.40,0.120,0.200],
   ];
 
-  function pctComissao(cedente, dias) {
+  function pctReceita(cedente, dias) {
     const c = String(cedente).trim().toUpperCase();
     for (const [mn,mx,dir,i30,i50] of TABELA_COM) {
       if (dias >= mn && dias <= mx) {
@@ -459,31 +459,31 @@
     const restWD=totalWD-workedWD;
 
     const opAgg={};
-    let totalRecebido=0, totalComissao=0;
+    let totalRecebido=0, totalReceita=0;
 
     Object.values(pagamentos).forEach(p=>{
       if(!p.operador) return;
-      const pct=pctComissao(p.cedente,p.dias);
-      const comissao=p.valorPago*pct;
+      const pct=pctReceita(p.cedente,p.dias);
+      const receita=p.valorPago*pct;
       totalRecebido+=p.valorPago;
-      totalComissao+=comissao;
+      totalReceita+=receita;
       const key=p.operador.toUpperCase();
-      if(!opAgg[key]) opAgg[key]={original:p.operador,pago:0,comissao:0};
+      if(!opAgg[key]) opAgg[key]={original:p.operador,pago:0,receita:0};
       opAgg[key].pago+=p.valorPago;
-      opAgg[key].comissao+=comissao;
+      opAgg[key].receita+=receita;
     });
 
     dadosRanking=Object.keys(metaMap).map(opKey=>{
       const meta=metaMap[opKey].meta;
       const nome=metaMap[opKey].original;
-      const agg=opAgg[opKey]||{pago:0,comissao:0};
+      const agg=opAgg[opKey]||{pago:0,receita:0};
       const realPct=meta>0?(agg.pago/meta)*100:0;
       const projVal=workedWD>0?(agg.pago/workedWD)*totalWD:0;
       const projPct=meta>0?(projVal/meta)*100:0;
-      return{op:nome,pago:agg.pago,comissao:agg.comissao,meta,realPct,projVal,projPct,totalWD,workedWD,restWD};
+      return{op:nome,pago:agg.pago,receita:agg.receita,meta,realPct,projVal,projPct,totalWD,workedWD,restWD};
     });
 
-    document.getElementById('m-comissao').textContent=fmt(totalComissao);
+    document.getElementById('m-receita').textContent=fmt(totalReceita);
     document.getElementById('m-recebido').textContent=fmt(totalRecebido);
     document.getElementById('m-ops').textContent=dadosRanking.length;
     document.getElementById('m-sem-op').textContent=window._semOperador||0;
@@ -499,7 +499,7 @@
     let sorted=[...dadosRanking];
     if(sortAtual==='proj') sorted.sort((a,b)=>b.projPct-a.projPct);
     else if(sortAtual==='real') sorted.sort((a,b)=>b.realPct-a.realPct);
-    else if(sortAtual==='comissao') sorted.sort((a,b)=>b.comissao-a.comissao);
+    else if(sortAtual==='receita') sorted.sort((a,b)=>b.receita-a.receita);
     else if(sortAtual==='pago') sorted.sort((a,b)=>b.pago-a.pago);
     else sorted.sort((a,b)=>a.op.localeCompare(b.op));
 
@@ -516,7 +516,7 @@
       tr.innerHTML=`
         <td><span class="rank-badge ${rc}">${i+1}</span></td>
         <td style="font-weight:600">${r.op}</td>
-        <td class="right" style="color:var(--teal);font-weight:600">${fmt(r.comissao)}</td>
+        <td class="right" style="color:var(--teal);font-weight:600">${fmt(r.receita)}</td>
         <td class="right">${fmt(r.pago)}</td>
         <td class="right"><div class="meta-cell"><span class="muted">${r.meta>0?fmt(r.meta):'—'}</span><span class="meta-sub">meta valor pago</span></div></td>
         <td class="right"><div class="bar-cell"><div class="bar-track"><div class="bar-fill ${barC}" style="width:${Math.min(100,r.realPct)}%"></div></div><span class="${realC}" style="min-width:46px">${r.realPct.toFixed(1)}%</span></div></td>
@@ -543,33 +543,33 @@
 
     // Recalcular totais para o payload do ranking
     const opAgg={};
-    let totalRecebido=0, totalComissao=0;
+    let totalRecebido=0, totalReceita=0;
     Object.values(window._payloadPagamentos).forEach(p=>{
       if(!p.operador) return;
-      const pct=pctComissao(p.cedente,p.dias);
-      const comissao=p.valorPago*pct;
+      const pct=pctReceita(p.cedente,p.dias);
+      const receita=p.valorPago*pct;
       totalRecebido+=p.valorPago;
-      totalComissao+=comissao;
+      totalReceita+=receita;
       const key=p.operador.toUpperCase();
-      if(!opAgg[key]) opAgg[key]={original:p.operador,pago:0,comissao:0};
+      if(!opAgg[key]) opAgg[key]={original:p.operador,pago:0,receita:0};
       opAgg[key].pago+=p.valorPago;
-      opAgg[key].comissao+=comissao;
+      opAgg[key].receita+=receita;
     });
 
     const ranking=Object.keys(metaMap).map(opKey=>{
       const meta=metaMap[opKey].meta;
-      const agg=opAgg[opKey]||{pago:0,comissao:0};
+      const agg=opAgg[opKey]||{pago:0,receita:0};
       const realPct=meta>0?(agg.pago/meta)*100:0;
       const projVal=workedWD>0?(agg.pago/workedWD)*totalWD:0;
       const projPct=meta>0?(projVal/meta)*100:0;
-      return{op:metaMap[opKey].original,pago:agg.pago,comissao:agg.comissao,meta,realPct,projVal,projPct};
+      return{op:metaMap[opKey].original,pago:agg.pago,receita:agg.receita,meta,realPct,projVal,projPct};
     });
 
     try{
       await Promise.all([
         db.ref('hoepers/pagamentos').set(window._payloadPagamentos),
         db.ref('ranking/atual').set({
-          ranking, totalRecebido, totalComissao, totalWD, workedWD,
+          ranking, totalRecebido, totalReceita, totalWD, workedWD,
           restWD: totalWD-workedWD,
           semOperador: window._semOperador||0,
           atualizadoEm: new Date().toISOString()
@@ -608,9 +608,9 @@
 
   function exportCSV(){
     if(!dadosRanking.length) return;
-    let csv='#;Operador;Comissão;Valor Pago;Meta;% Realizado;% Projeção\n';
+    let csv='#;Operador;Receita;Valor Pago;Meta;% Realizado;% Projeção\n';
     [...dadosRanking].sort((a,b)=>b.projPct-a.projPct).forEach((r,i)=>{
-      csv+=`${i+1};${r.op};${r.comissao.toFixed(2)};${r.pago.toFixed(2)};${r.meta.toFixed(2)};${r.realPct.toFixed(1)}%;${r.projPct.toFixed(1)}%\n`;
+      csv+=`${i+1};${r.op};${r.receita.toFixed(2)};${r.pago.toFixed(2)};${r.meta.toFixed(2)};${r.realPct.toFixed(1)}%;${r.projPct.toFixed(1)}%\n`;
     });
     const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
     const url=URL.createObjectURL(blob);
