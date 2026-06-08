@@ -514,33 +514,93 @@
 
   async function executarReset(){
     fecharModal();
-    // Salvar snapshot do ciclo atual como histórico
-    const mesKey = hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0');
-    const mesNome = nomeMes(hoje.getFullYear(), hoje.getMonth()+1);
 
-    // Pegar ranking atual publicado para salvar no histórico
-    const snapAtual = await db.ref('ranking/atual').get();
-    const dadosAtuais = snapAtual.val();
-
-    try{
-      if(dadosAtuais){
-        await db.ref('ranking/historico/'+mesKey).set({...dadosAtuais, mesNome});
+    // 1. Detectar mês/ano pela data dos pagamentos acumulados
+    let mesRef = null;
+    const pagamentos = {...historicoFirebase};
+    if (Object.keys(pagamentos).length > 0) {
+      // Pegar a data de pagamento mais antiga para identificar o mês do ciclo
+      const datas = Object.values(pagamentos)
+        .map(p => p.dataPag)
+        .filter(d => d && d.includes('/'))
+        .map(d => { const pt = d.split('/'); return new Date(parseInt(pt[2]), parseInt(pt[1])-1, parseInt(pt[0])); })
+        .filter(d => !isNaN(d));
+      if (datas.length > 0) {
+        datas.sort((a,b) => a-b);
+        const primeiraDt = datas[0];
+        mesRef = { y: primeiraDt.getFullYear(), m: primeiraDt.getMonth()+1 };
       }
-      // Zerar apenas o ranking atual e os pagamentos do ciclo
+    }
+    // Fallback: mês anterior ao atual
+    if (!mesRef) {
+      const d = new Date(hoje.getFullYear(), hoje.getMonth()-1, 1);
+      mesRef = { y: d.getFullYear(), m: d.getMonth()+1 };
+    }
+
+    const mesKey = mesRef.y + '-' + String(mesRef.m).padStart(2,'0');
+    const mesNome = nomeMes(mesRef.y, mesRef.m);
+
+    // 2. Recalcular totais reais do ciclo encerrado (sem projeção)
+    const totalWDCiclo = diasUteisNoMes(mesRef.y, mesRef.m);
+    const opAggFinal = {};
+    let totalRecebidoFinal = 0, totalReceitaFinal = 0;
+
+    Object.values(pagamentos).forEach(p => {
+      if (!p.operador) return;
+      const pct = pctReceita(p.cedente, p.dias);
+      const receita = p.valorPago * pct;
+      totalRecebidoFinal += p.valorPago;
+      totalReceitaFinal += receita;
+      const key = p.operador.toUpperCase();
+      if (!opAggFinal[key]) opAggFinal[key] = { original: p.operador, pago: 0, receita: 0 };
+      opAggFinal[key].pago += p.valorPago;
+      opAggFinal[key].receita += receita;
+    });
+
+    // Montar ranking final — projeção zerada (ciclo encerrado)
+    const rankingFinal = Object.values(opAggFinal).map(op => {
+      // Buscar meta no metaMap
+      const metaEntry = metaMap[op.original.toUpperCase()];
+      const meta = metaEntry ? metaEntry.meta : 0;
+      const realPct = meta > 0 ? (op.pago / meta) * 100 : 0;
+      return {
+        op: op.original,
+        pago: op.pago,
+        receita: op.receita,
+        meta,
+        realPct,
+        projVal: 0,   // ciclo encerrado — sem projeção
+        projPct: 0,
+      };
+    }).sort((a,b) => b.realPct - a.realPct);
+
+    const snapshotHistorico = {
+      mesNome,
+      ranking: rankingFinal,
+      totalRecebido: totalRecebidoFinal,
+      totalReceita: totalReceitaFinal,
+      totalWD: totalWDCiclo,
+      atualizadoEm: new Date().toISOString(),
+    };
+
+    try {
+      await db.ref('ranking/historico/' + mesKey).set(snapshotHistorico);
       await Promise.all([
         db.ref('hoepers/pagamentos').remove(),
         db.ref('ranking/atual').remove(),
       ]);
-      dadosRanking=[];
-      window._payloadPagamentos=null;
-      window._semOperador=0;
-      document.getElementById('metrics-section').style.display='none';
-      document.getElementById('empty-state').style.display='block';
-      document.getElementById('btn-publish').disabled=true;
+      dadosRanking = [];
+      window._payloadPagamentos = null;
+      window._semOperador = 0;
+      document.getElementById('metrics-section').style.display = 'none';
+      document.getElementById('empty-state').style.display = 'block';
+      document.getElementById('btn-publish').disabled = true;
       document.getElementById('warn-box').classList.remove('show');
-      document.getElementById('status-msg').innerHTML='<span style="color:var(--teal)">✓</span> Ciclo de '+mesNome+' encerrado e salvo no histórico. Novo ciclo iniciado.';
-    }catch(err){
-      document.getElementById('status-msg').innerHTML='<span style="color:var(--red)">✗</span> Erro ao encerrar ciclo: '+err.message;
+      document.getElementById('status-msg').innerHTML =
+        '<span style="color:var(--teal)">✓</span> Ciclo de ' + mesNome + ' encerrado e salvo no histórico. Novo ciclo iniciado.';
+    } catch(err) {
+      document.getElementById('status-msg').innerHTML =
+        '<span style="color:var(--red)">✗</span> Erro ao encerrar ciclo: ' + err.message;
     }
   }
 
