@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus — Hoepers Operação</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  :root {
+    --navy:#0d1b2e;--navy-card:#112240;--navy-border:#1e3a5f;--navy-hover:#1a2f4a;
+    --teal:#00c896;--teal-dim:#00c89618;--amber:#f5a623;--red:#e84855;
+    --text-primary:#e8f0fe;--text-secondary:#7a9cc4;--text-muted:#4a6a8a;
+    --gold:#c8a84b;--silver:#8a9bb0;--bronze:#a0674a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--navy);font-family:'Inter',sans-serif;color:var(--text-primary);min-height:100vh}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;border-bottom:1px solid var(--navy-border)}
+  .topbar-brand{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text-secondary);letter-spacing:.08em}
+  .topbar-brand span{color:var(--teal);font-weight:700}
+  .topbar-brand .sep{color:var(--navy-border);margin:0 4px}
+  .topbar-right{display:flex;align-items:center;gap:16px}
+  .topbar-date{font-size:12px;color:var(--text-muted)}
+  .live-badge{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--teal);background:var(--teal-dim);border:1px solid #00c89644;border-radius:20px;padding:5px 14px}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .main{max-width:1100px;margin:0 auto;padding:28px 24px}
+  .header-card{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:14px;padding:22px 28px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .header-left{display:flex;align-items:center;gap:16px}
+  .header-icon{width:46px;height:46px;background:var(--teal-dim);border:1px solid #00c89644;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+  .header-title{font-size:18px;font-weight:600}
+  .header-sub{font-size:12px;color:var(--text-secondary);margin-top:3px}
+
+  /* Abas */
+  .tabs-wrap{display:flex;gap:4px;margin-bottom:20px;overflow-x:auto;padding-bottom:2px}
+  .tab-btn{background:transparent;border:1px solid var(--navy-border);color:var(--text-muted);font-size:12px;font-family:'Inter',sans-serif;padding:8px 18px;border-radius:8px;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
+  .tab-btn:hover{border-color:var(--teal);color:var(--text-primary)}
+  .tab-btn.active{background:var(--teal);border-color:var(--teal);color:#001a10;font-weight:600}
+  .tab-btn.historico{border-color:var(--navy-border)}
+
+  .metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--navy-border);border:1px solid var(--navy-border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+  .metric-cell{background:var(--navy-card);padding:20px 24px}
+  .metric-label{font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px}
+  .metric-value{font-size:26px;font-weight:700;color:var(--text-primary);line-height:1;margin-bottom:4px}
+  .metric-sub{font-size:11px;color:var(--text-muted)}
+  .sort-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .sort-btns{display:flex;gap:6px;flex-wrap:wrap}
+  .btn-sort{background:transparent;border:1px solid var(--navy-border);color:var(--text-secondary);font-size:12px;font-family:'Inter',sans-serif;padding:6px 14px;border-radius:20px;cursor:pointer;transition:all .2s}
+  .btn-sort:hover{border-color:var(--teal);color:var(--text-primary)}
+  .btn-sort.active{background:var(--teal);border-color:var(--teal);color:#001a10;font-weight:600}
+  .table-wrap{background:var(--navy-card);border:1px solid var(--navy-border);border-radius:12px;overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  thead th{padding:12px 16px;font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase;text-align:left;border-bottom:1px solid var(--navy-border);background:#0a1628}
+  thead th.right{text-align:right}
+  tbody tr{border-bottom:1px solid #0d1f35;transition:background .15s}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:var(--navy-hover)}
+  td{padding:14px 16px;font-size:13px;color:var(--text-primary);vertical-align:middle}
+  td.right{text-align:right}
+  td.muted{color:var(--text-secondary);font-size:12px}
+  .rank-badge{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+  .rank-1{background:#2a2000;color:var(--gold);border:1px solid var(--gold)}
+  .rank-2{background:#1a1f28;color:var(--silver);border:1px solid var(--silver)}
+  .rank-3{background:#1f1208;color:var(--bronze);border:1px solid var(--bronze)}
+  .rank-n{background:#0d1b2e;color:var(--text-muted);border:1px solid var(--navy-border)}
+  .bar-cell{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+  .bar-track{width:80px;height:5px;background:#0a1628;border-radius:3px;overflow:hidden;flex-shrink:0}
+  .bar-fill{height:100%;border-radius:3px}
+  .bar-green{background:var(--teal)}.bar-amber{background:var(--amber)}.bar-red{background:var(--red)}
+  .pct-green{color:var(--teal);font-weight:600}.pct-amber{color:var(--amber);font-weight:600}.pct-red{color:var(--red);font-weight:600}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+  .dot-green{background:var(--teal)}.dot-amber{background:var(--amber)}.dot-red{background:var(--red)}
+  .meta-cell{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+  .meta-sub{font-size:10px;color:var(--text-muted)}
+  .empty-state{text-align:center;padding:80px 20px;color:var(--text-muted);font-size:14px}
+  .empty-sub{font-size:12px;margin-top:8px;opacity:.7}
+  .historico-badge-inline{display:inline-block;background:#0a1628;border:1px solid var(--navy-border);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--text-muted);margin-left:8px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-brand"><span>NEXUS</span><span class="sep">/</span>ASSESSORIA DE COBRANÇA</div>
+  <div class="topbar-right">
+    <div class="live-badge"><span class="live-dot"></span>Ao vivo</div>
+    <div class="topbar-date" id="topbar-date"></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="header-card">
+    <div class="header-left">
+      <div class="header-icon">📊</div>
+      <div>
+        <div class="header-title">Ranking de operadores — HOEPERS</div>
+        <div class="header-sub" id="header-sub">Conectando ao banco de dados...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Abas de ciclos -->
+  <div class="tabs-wrap" id="tabs-wrap">
+    <button class="tab-btn active" id="tab-atual" onclick="mostrarCiclo('atual')">Ciclo atual</button>
+    <!-- abas de histórico inseridas aqui dinamicamente -->
+  </div>
+
+  <!-- Conteúdo ciclo atual -->
+  <div id="conteudo-atual" style="display:none">
+    <div class="metrics-grid">
+      <div class="metric-cell"><div class="metric-label">Total receita</div><div class="metric-value" id="m-receita">—</div><div class="metric-sub">no ciclo</div></div>
+      <div class="metric-cell"><div class="metric-label">Total recebido</div><div class="metric-value" id="m-recebido">—</div><div class="metric-sub">no ciclo</div></div>
+      <div class="metric-cell"><div class="metric-label">Operadores</div><div class="metric-value" id="m-ops">—</div><div class="metric-sub">com meta definida</div></div>
+      <div class="metric-cell"><div class="metric-label">Dias úteis restantes</div><div class="metric-value" id="m-du-rest">—</div><div class="metric-sub" id="m-du-sub">no ciclo</div></div>
+    </div>
+    <div class="sort-bar">
+      <span style="font-size:12px;color:var(--text-muted)">Ordenar:</span>
+      <div class="sort-btns">
+        <button class="btn-sort active" onclick="sortAtual='proj';renderAtual(event)" id="sort-proj">% Projeção</button>
+        <button class="btn-sort" onclick="sortAtual='real';renderAtual(event)">% Realizado</button>
+        <button class="btn-sort" onclick="sortAtual='receita';renderAtual(event)">Receita</button>
+        <button class="btn-sort" onclick="sortAtual='pago';renderAtual(event)">Valor Pago</button>
+        <button class="btn-sort" onclick="sortAtual='nome';renderAtual(event)">Nome</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:48px">#</th><th>Operador</th>
+          <th class="right">Receita</th><th class="right">Valor Pago</th>
+          <th class="right">Meta</th><th class="right">% Realizado</th><th class="right">% Projeção</th>
+        </tr></thead>
+        <tbody id="tbody-atual"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Conteúdo histórico (gerado dinamicamente) -->
+  <div id="conteudo-historico" style="display:none">
+    <div class="metrics-grid">
+      <div class="metric-cell"><div class="metric-label">Total receita</div><div class="metric-value" id="h-receita">—</div><div class="metric-sub">no ciclo encerrado</div></div>
+      <div class="metric-cell"><div class="metric-label">Total recebido</div><div class="metric-value" id="h-recebido">—</div><div class="metric-sub">no ciclo encerrado</div></div>
+      <div class="metric-cell"><div class="metric-label">Operadores</div><div class="metric-value" id="h-ops">—</div><div class="metric-sub">participaram</div></div>
+      <div class="metric-cell"><div class="metric-label">Ciclo</div><div class="metric-value" id="h-mes" style="font-size:14px;padding-top:4px">—</div><div class="metric-sub">encerrado</div></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:48px">#</th><th>Operador</th>
+          <th class="right">Receita</th><th class="right">Valor Pago</th>
+          <th class="right">Meta</th><th class="right">% Realizado</th>
+        </tr></thead>
+        <tbody id="tbody-historico"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="empty-state" class="empty-state">
+    <div style="font-size:48px;margin-bottom:16px;opacity:.3">📋</div>
+    Ranking não disponível
+    <div class="empty-sub">Aguardando publicação pelo administrador.</div>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCGvW6rQVgvWneq-x6OCwOGhCnO2xoy0S0",
+    authDomain: "ranking-hoepers.firebaseapp.com",
+    databaseURL: "https://ranking-hoepers-default-rtdb.firebaseio.com",
+    projectId: "ranking-hoepers",
+    storageBucket: "ranking-hoepers.firebasestorage.app",
+    messagingSenderId: "1065309462071",
+    appId: "1:1065309462071:web:4dfbcd7260ad572b7329b2",
+    measurementId: "G-CGJ3WB506B"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const hoje = new Date();
+  document.getElementById('topbar-date').textContent =
+    hoje.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+
+  function fmt(v){return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+
+  let dadosAtual = null, dadosHistorico = {}, sortAtual = 'proj', cicloVisivel = 'atual';
+
+  // ── Ranking atual ─────────────────────────────────────────────────────────
+  db.ref('ranking/atual').on('value', snap => {
+    dadosAtual = snap.val();
+    if (!dadosAtual) {
+      if (cicloVisivel === 'atual') {
+        document.getElementById('conteudo-atual').style.display = 'none';
+        document.getElementById('empty-state').style.display = 'block';
+      }
+      document.getElementById('header-sub').textContent = 'Aguardando publicação pelo administrador.';
+      return;
+    }
+    const at = new Date(dadosAtual.atualizadoEm);
+    document.getElementById('header-sub').textContent =
+      'Atualizado em ' + at.toLocaleDateString('pt-BR') + ' às ' +
+      at.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('m-receita').textContent = fmt(dadosAtual.totalReceita||0);
+    document.getElementById('m-recebido').textContent = fmt(dadosAtual.totalRecebido||0);
+    document.getElementById('m-ops').textContent = dadosAtual.ranking.length;
+    document.getElementById('m-du-rest').textContent = dadosAtual.restWD;
+    document.getElementById('m-du-sub').textContent = 'de ' + dadosAtual.totalWD + ' úteis no ciclo';
+
+    if (cicloVisivel === 'atual') {
+      document.getElementById('empty-state').style.display = 'none';
+      document.getElementById('conteudo-atual').style.display = 'block';
+      renderTabelaAtual(dadosAtual.ranking);
+    }
+  });
+
+  // ── Histórico ─────────────────────────────────────────────────────────────
+  db.ref('ranking/historico').on('value', snap => {
+    dadosHistorico = snap.val() || {};
+    renderAbas();
+  });
+
+  function renderAbas() {
+    const wrap = document.getElementById('tabs-wrap');
+    // Remove abas antigas de histórico
+    wrap.querySelectorAll('.tab-historico').forEach(e => e.remove());
+
+    // Ordenar meses decrescente
+    const meses = Object.keys(dadosHistorico).sort().reverse();
+    meses.forEach(mesKey => {
+      const btn = document.createElement('button');
+      const mesNome = dadosHistorico[mesKey].mesNome || mesKey;
+      btn.className = 'tab-btn tab-historico historico';
+      btn.textContent = 'Ranking ' + capitalize(mesNome);
+      btn.onclick = () => mostrarCiclo(mesKey);
+      wrap.appendChild(btn);
+    });
+  }
+
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  function mostrarCiclo(key) {
+    cicloVisivel = key;
+    // Atualizar abas ativas
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if (key === 'atual') {
+      document.getElementById('tab-atual').classList.add('active');
+      document.getElementById('conteudo-historico').style.display = 'none';
+      if (dadosAtual) {
+        document.getElementById('conteudo-atual').style.display = 'block';
+        document.getElementById('empty-state').style.display = 'none';
+        renderTabelaAtual(dadosAtual.ranking);
+      } else {
+        document.getElementById('conteudo-atual').style.display = 'none';
+        document.getElementById('empty-state').style.display = 'block';
+      }
+    } else {
+      // Aba histórico
+      document.querySelectorAll('.tab-historico').forEach(b => {
+        const mesNome = dadosHistorico[key]?.mesNome || key;
+        if (b.textContent === 'Ranking ' + capitalize(mesNome)) b.classList.add('active');
+      });
+      document.getElementById('conteudo-atual').style.display = 'none';
+      document.getElementById('empty-state').style.display = 'none';
+      document.getElementById('conteudo-historico').style.display = 'block';
+      const d = dadosHistorico[key];
+      document.getElementById('h-receita').textContent = fmt(d.totalReceita||d.totalComissao||0);
+      document.getElementById('h-recebido').textContent = fmt(d.totalRecebido||0);
+      document.getElementById('h-ops').textContent = d.ranking.length;
+      document.getElementById('h-mes').textContent = capitalize(d.mesNome||key);
+      renderTabelaHistorico(d.ranking);
+    }
+  }
+
+  function renderTabelaAtual(ranking) {
+    let sorted = [...ranking];
+    if (sortAtual==='proj') sorted.sort((a,b)=>b.projPct-a.projPct);
+    else if (sortAtual==='real') sorted.sort((a,b)=>b.realPct-a.realPct);
+    else if (sortAtual==='receita') sorted.sort((a,b)=>b.receita-a.receita);
+    else if (sortAtual==='pago') sorted.sort((a,b)=>b.pago-a.pago);
+    else sorted.sort((a,b)=>a.op.localeCompare(b.op));
+    renderTabela(sorted, 'tbody-atual', true);
+  }
+
+  function renderAtual(e) {
+    document.querySelectorAll('#conteudo-atual .btn-sort').forEach(b=>b.classList.remove('active'));
+    e.target.classList.add('active');
+    if (dadosAtual) renderTabelaAtual(dadosAtual.ranking);
+  }
+
+  function renderTabelaHistorico(ranking) {
+    const sorted = [...ranking].sort((a,b)=>b.projPct-a.projPct);
+    renderTabela(sorted, 'tbody-historico', false);
+  }
+
+  function renderTabela(sorted, tbodyId, comProjecao) {
+    const tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = '';
+    sorted.forEach((r,i) => {
+      const rc=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+      const realC=r.realPct>=100?'pct-green':r.realPct>=80?'pct-amber':'pct-red';
+      const projC=r.projPct>=100?'pct-green':r.projPct>=80?'pct-amber':'pct-red';
+      const barC=r.realPct>=100?'bar-green':r.realPct>=80?'bar-amber':'bar-red';
+      const barPC=r.projPct>=100?'bar-green':r.projPct>=80?'bar-amber':'bar-red';
+      const dotC=r.projPct>=100?'dot-green':r.projPct>=80?'dot-amber':'dot-red';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><span class="rank-badge ${rc}">${i+1}</span></td>
+        <td style="font-weight:600">${r.op}</td>
+        <td class="right" style="color:var(--teal);font-weight:600">${fmt(r.receita||r.comissao||0)}</td>
+        <td class="right">${fmt(r.pago||0)}</td>
+        <td class="right"><div class="meta-cell"><span class="muted">${r.meta>0?fmt(r.meta):'—'}</span><span class="meta-sub">meta valor pago</span></div></td>
+        <td class="right"><div class="bar-cell"><div class="bar-track"><div class="bar-fill ${barC}" style="width:${Math.min(100,r.realPct)}%"></div></div><span class="${realC}" style="min-width:46px">${r.realPct.toFixed(1)}%</span></div></td>
+        ${comProjecao ? `<td class="right"><div class="bar-cell"><span class="dot ${dotC}"></span><div class="bar-track"><div class="bar-fill ${barPC}" style="width:${Math.min(100,r.projPct)}%"></div></div><span class="${projC}" style="min-width:46px">${r.projPct.toFixed(1)}%</span></div></td>` : ''}`;
+      tbody.appendChild(tr);
+    });
+  }
+</script>
+</body>
+</html>
