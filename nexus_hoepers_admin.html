@@ -205,6 +205,9 @@
             <th>Operador</th>
             <th class="right">Receita</th>
             <th class="right">Valor Pago</th>
+            <th class="right">TCB</th>
+            <th class="right">VUO</th>
+            <th class="right">CSY</th>
             <th class="right">Meta</th>
             <th class="right">% Realizado</th>
             <th class="right">% Projeção</th>
@@ -382,7 +385,7 @@
       }
       const operador=cpfOpMap[cpfNum]||null;
       if(!operador) semOperador.push({cpf:cpfRaw,contrato,cedente,valor:valorPago});
-      novosPagamentos[chave]={cpf:cpfNum,valorPago,cedente,dias,contrato,dataPag,operador};
+      novosPagamentos[chave]={cpf:cpfNum,valorPago,cedente,credor:String(row['Credor']||'').trim(),dias,contrato,dataPag,operador};
     });
 
     const warnBox=document.getElementById('warn-box');
@@ -417,9 +420,13 @@
       totalRecebido+=p.valorPago;
       totalReceita+=receita;
       const key=p.operador.toUpperCase();
-      if(!opAgg[key]) opAgg[key]={original:p.operador,pago:0,receita:0};
+      if(!opAgg[key]) opAgg[key]={original:p.operador,pago:0,receita:0,pagoTCB:0,pagoVUO:0,pagoCSY:0};
       opAgg[key].pago+=p.valorPago;
       opAgg[key].receita+=receita;
+      const credor=String(p.credor||'').trim().toUpperCase();
+      if(credor==='TCB') opAgg[key].pagoTCB+=p.valorPago;
+      else if(credor==='VUO') opAgg[key].pagoVUO+=p.valorPago;
+      else if(credor==='CSY') opAgg[key].pagoCSY+=p.valorPago;
     });
 
     dadosRanking=Object.keys(metaMap).map(opKey=>{
@@ -429,7 +436,7 @@
       const realPct=meta>0?(agg.pago/meta)*100:0;
       const projVal=workedWD>0?(agg.pago/workedWD)*totalWD:0;
       const projPct=meta>0?(projVal/meta)*100:0;
-      return{op:nome,pago:agg.pago,receita:agg.receita,meta,realPct,projVal,projPct,totalWD,workedWD,restWD};
+      return{op:nome,pago:agg.pago,receita:agg.receita,pagoTCB:agg.pagoTCB||0,pagoVUO:agg.pagoVUO||0,pagoCSY:agg.pagoCSY||0,meta,realPct,projVal,projPct,totalWD,workedWD,restWD};
     });
 
     document.getElementById('m-receita').textContent=fmt(totalReceita);
@@ -460,7 +467,7 @@
       const barPC=r.projPct>=100?'bar-green':r.projPct>=80?'bar-amber':'bar-red';
       const dotC=r.projPct>=100?'dot-green':r.projPct>=80?'dot-amber':'dot-red';
       const tr=document.createElement('tr');
-      tr.innerHTML=`<td><span class="rank-badge ${rc}">${i+1}</span></td><td style="font-weight:600">${r.op}</td><td class="right" style="color:var(--teal);font-weight:600">${fmt(r.receita)}</td><td class="right">${fmt(r.pago)}</td><td class="right"><div class="meta-cell"><span class="muted">${r.meta>0?fmt(r.meta):'—'}</span><span class="meta-sub">meta valor pago</span></div></td><td class="right"><div class="bar-cell"><div class="bar-track"><div class="bar-fill ${barC}" style="width:${Math.min(100,r.realPct)}%"></div></div><span class="${realC}" style="min-width:46px">${r.realPct.toFixed(1)}%</span></div></td><td class="right"><div class="bar-cell"><span class="dot ${dotC}"></span><div class="bar-track"><div class="bar-fill ${barPC}" style="width:${Math.min(100,r.projPct)}%"></div></div><span class="${projC}" style="min-width:46px">${r.projPct.toFixed(1)}%</span></div></td>`;
+      tr.innerHTML=`<td><span class="rank-badge ${rc}">${i+1}</span></td><td style="font-weight:600">${r.op}</td><td class="right" style="color:var(--teal);font-weight:600">${fmt(r.receita)}</td><td class="right">${fmt(r.pago)}</td><td class="right" style="color:var(--text-secondary)">${fmt(r.pagoTCB||0)}</td><td class="right" style="color:var(--text-secondary)">${fmt(r.pagoVUO||0)}</td><td class="right" style="color:var(--text-secondary)">${fmt(r.pagoCSY||0)}</td><td class="right"><div class="meta-cell"><span class="muted">${r.meta>0?fmt(r.meta):'—'}</span><span class="meta-sub">meta valor pago</span></div></td><td class="right"><div class="bar-cell"><div class="bar-track"><div class="bar-fill ${barC}" style="width:${Math.min(100,r.realPct)}%"></div></div><span class="${realC}" style="min-width:46px">${r.realPct.toFixed(1)}%</span></div></td><td class="right"><div class="bar-cell"><span class="dot ${dotC}"></span><div class="bar-track"><div class="bar-fill ${barPC}" style="width:${Math.min(100,r.projPct)}%"></div></div><span class="${projC}" style="min-width:46px">${r.projPct.toFixed(1)}%</span></div></td>`;
       tbody.appendChild(tr);
     });
   }
@@ -486,8 +493,12 @@
       const receita=p.valorPago*pct;
       totalRecebido+=p.valorPago;totalReceita+=receita;
       const key=p.operador.toUpperCase();
-      if(!opAgg[key]) opAgg[key]={original:p.operador,pago:0,receita:0};
+      if(!opAgg[key]) opAgg[key]={original:p.operador,pago:0,receita:0,pagoTCB:0,pagoVUO:0,pagoCSY:0};
       opAgg[key].pago+=p.valorPago;opAgg[key].receita+=receita;
+      const credor2=String(p.credor||'').trim().toUpperCase();
+      if(credor2==='TCB') opAgg[key].pagoTCB+=p.valorPago;
+      else if(credor2==='VUO') opAgg[key].pagoVUO+=p.valorPago;
+      else if(credor2==='CSY') opAgg[key].pagoCSY+=p.valorPago;
     });
     const ranking=Object.keys(metaMap).map(opKey=>{
       const meta=metaMap[opKey].meta;
@@ -495,7 +506,7 @@
       const realPct=meta>0?(agg.pago/meta)*100:0;
       const projVal=workedWD>0?(agg.pago/workedWD)*totalWD:0;
       const projPct=meta>0?(projVal/meta)*100:0;
-      return{op:metaMap[opKey].original,pago:agg.pago,receita:agg.receita,meta,realPct,projVal,projPct};
+      return{op:metaMap[opKey].original,pago:agg.pago,receita:agg.receita,pagoTCB:agg.pagoTCB||0,pagoVUO:agg.pagoVUO||0,pagoCSY:agg.pagoCSY||0,meta,realPct,projVal,projPct};
     });
     try{
       await Promise.all([
@@ -552,9 +563,13 @@
       totalRecebidoFinal += p.valorPago;
       totalReceitaFinal += receita;
       const key = p.operador.toUpperCase();
-      if (!opAggFinal[key]) opAggFinal[key] = { original: p.operador, pago: 0, receita: 0 };
+      if (!opAggFinal[key]) opAggFinal[key] = { original: p.operador, pago: 0, receita: 0, pagoTCB:0, pagoVUO:0, pagoCSY:0 };
       opAggFinal[key].pago += p.valorPago;
       opAggFinal[key].receita += receita;
+      const credor3=String(p.credor||'').trim().toUpperCase();
+      if(credor3==='TCB') opAggFinal[key].pagoTCB+=p.valorPago;
+      else if(credor3==='VUO') opAggFinal[key].pagoVUO+=p.valorPago;
+      else if(credor3==='CSY') opAggFinal[key].pagoCSY+=p.valorPago;
     });
 
     // Montar ranking final — projeção zerada (ciclo encerrado)
@@ -564,13 +579,9 @@
       const meta = metaEntry ? metaEntry.meta : 0;
       const realPct = meta > 0 ? (op.pago / meta) * 100 : 0;
       return {
-        op: op.original,
-        pago: op.pago,
-        receita: op.receita,
-        meta,
-        realPct,
-        projVal: 0,   // ciclo encerrado — sem projeção
-        projPct: 0,
+        op: op.original, pago: op.pago, receita: op.receita,
+        pagoTCB: op.pagoTCB||0, pagoVUO: op.pagoVUO||0, pagoCSY: op.pagoCSY||0,
+        meta, realPct, projVal: 0, projPct: 0,
       };
     }).sort((a,b) => b.realPct - a.realPct);
 

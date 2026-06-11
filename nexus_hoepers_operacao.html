@@ -127,6 +127,7 @@
         <thead><tr>
           <th style="width:48px">#</th><th>Operador</th>
           <th class="right">Receita</th><th class="right">Valor Pago</th>
+          <th class="right">TCB</th><th class="right">VUO</th><th class="right">CSY</th>
           <th class="right">Meta</th><th class="right">% Realizado</th><th class="right">% Projeção</th>
         </tr></thead>
         <tbody id="tbody-atual"></tbody>
@@ -147,6 +148,7 @@
         <thead><tr>
           <th style="width:48px">#</th><th>Operador</th>
           <th class="right">Receita</th><th class="right">Valor Pago</th>
+          <th class="right">TCB</th><th class="right">VUO</th><th class="right">CSY</th>
           <th class="right">Meta</th><th class="right">% Realizado</th>
         </tr></thead>
         <tbody id="tbody-historico"></tbody>
@@ -261,7 +263,7 @@
       document.getElementById('empty-state').style.display = 'none';
       document.getElementById('conteudo-historico').style.display = 'block';
       const d = dadosHistorico[key];
-      document.getElementById('h-receita').textContent = fmt(d.totalReceita||0);
+      document.getElementById('h-receita').textContent = fmt(d.totalReceita||d.totalComissao||0);
       document.getElementById('h-recebido').textContent = fmt(d.totalRecebido||0);
       document.getElementById('h-ops').textContent = d.ranking.length;
       document.getElementById('h-mes').textContent = capitalize(d.mesNome||key);
@@ -304,8 +306,11 @@
       tr.innerHTML = `
         <td><span class="rank-badge ${rc}">${i+1}</span></td>
         <td style="font-weight:600">${r.op}</td>
-        <td class="right" style="color:var(--teal);font-weight:600">${fmt(r.receita||0)}</td>
+        <td class="right" style="color:var(--teal);font-weight:600">${fmt(r.receita||r.comissao||0)}</td>
         <td class="right">${fmt(r.pago||0)}</td>
+        <td class="right" style="color:var(--text-secondary)">${fmt(r.pagoTCB||0)}</td>
+        <td class="right" style="color:var(--text-secondary)">${fmt(r.pagoVUO||0)}</td>
+        <td class="right" style="color:var(--text-secondary)">${fmt(r.pagoCSY||0)}</td>
         <td class="right"><div class="meta-cell"><span class="muted">${r.meta>0?fmt(r.meta):'—'}</span><span class="meta-sub">meta valor pago</span></div></td>
         <td class="right"><div class="bar-cell"><div class="bar-track"><div class="bar-fill ${barC}" style="width:${Math.min(100,r.realPct)}%"></div></div><span class="${realC}" style="min-width:46px">${r.realPct.toFixed(1)}%</span></div></td>
         ${comProjecao ? `<td class="right"><div class="bar-cell"><span class="dot ${dotC}"></span><div class="bar-track"><div class="bar-fill ${barPC}" style="width:${Math.min(100,r.projPct)}%"></div></div><span class="${projC}" style="min-width:46px">${r.projPct.toFixed(1)}%</span></div></td>` : ''}`;
